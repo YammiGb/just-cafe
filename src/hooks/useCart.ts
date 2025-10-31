@@ -21,38 +21,64 @@ export const useCart = () => {
   const addToCart = useCallback((item: MenuItem, quantity: number = 1, variation?: Variation, addOns?: AddOn[]) => {
     const totalPrice = calculateItemPrice(item, variation, addOns);
     
-    // Group add-ons by name and sum their quantities
-    const groupedAddOns = addOns?.reduce((groups, addOn) => {
-      const existing = groups.find(g => g.id === addOn.id);
-      if (existing) {
-        existing.quantity = (existing.quantity || 1) + 1;
-      } else {
-        groups.push({ ...addOn, quantity: 1 });
-      }
-      return groups;
-    }, [] as (AddOn & { quantity: number })[]);
+    // Normalize add-ons: group by ID and sum quantities
+    // Handle both flat arrays (from MenuItemCard) and already-grouped arrays
+    const normalizeAddOns = (addOns?: AddOn[]): (AddOn & { quantity: number })[] => {
+      if (!addOns || addOns.length === 0) return [];
+      
+      const grouped = addOns.reduce((acc, addOn) => {
+        const existing = acc.find(g => g.id === addOn.id);
+        if (existing) {
+          existing.quantity = (existing.quantity || 1) + 1;
+        } else {
+          acc.push({ ...addOn, quantity: addOn.quantity || 1 });
+        }
+        return acc;
+      }, [] as (AddOn & { quantity: number })[]);
+      
+      return grouped.sort((a, b) => a.id.localeCompare(b.id));
+    };
+    
+    const groupedAddOns = normalizeAddOns(addOns);
+    
+    // Helper function to create a comparison key for an item
+    const createItemKey = (menuItemId: string, selectedVariation?: Variation, selectedAddOns?: AddOn[]) => {
+      const variationKey = selectedVariation?.id || 'none';
+      const addOnsKey = normalizeAddOns(selectedAddOns)
+        .map(a => `${a.id}:${a.quantity}`)
+        .sort()
+        .join(',') || 'none';
+      return `${menuItemId}|${variationKey}|${addOnsKey}`;
+    };
     
     setCartItems(prev => {
-      const existingItem = prev.find(cartItem => 
-        cartItem.id === item.id && 
-        cartItem.selectedVariation?.id === variation?.id &&
-        JSON.stringify(cartItem.selectedAddOns?.map(a => `${a.id}-${a.quantity || 1}`).sort()) === JSON.stringify(groupedAddOns?.map(a => `${a.id}-${a.quantity}`).sort())
-      );
+      const newItemKey = createItemKey(item.id, variation, addOns);
+      
+      const existingItem = prev.find(cartItem => {
+        // Extract original menu item id from cart item id (format: "menuItemId:::CART:::timestamp-random")
+        // Use ::: as separator since it won't appear in UUIDs
+        const parts = cartItem.id.split(':::CART:::');
+        const originalMenuItemId = parts.length > 1 ? parts[0] : cartItem.id.split('-')[0];
+        const cartItemKey = createItemKey(originalMenuItemId, cartItem.selectedVariation, cartItem.selectedAddOns);
+        return cartItemKey === newItemKey;
+      });
       
       if (existingItem) {
+        // Item already exists, increment quantity
         return prev.map(cartItem =>
           cartItem === existingItem
             ? { ...cartItem, quantity: cartItem.quantity + quantity }
             : cartItem
         );
       } else {
-        const uniqueId = `${item.id}-${variation?.id || 'default'}-${addOns?.map(a => a.id).join(',') || 'none'}`;
+        // New item, add to cart with unique id that preserves original menu item id
+        const uniqueId = `${item.id}:::CART:::${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         return [...prev, { 
           ...item,
           id: uniqueId,
           quantity,
           selectedVariation: variation,
-          selectedAddOns: groupedAddOns || [],
+          selectedAddOns: groupedAddOns,
           totalPrice
         }];
       }
