@@ -38,17 +38,20 @@ export const useCategories = () => {
     }
   };
 
-  const addCategory = async (category: Omit<Category, 'created_at' | 'updated_at'>) => {
+  const addCategory = async (category: Partial<Omit<Category, 'created_at' | 'updated_at'>>) => {
     try {
+      const insertPayload: any = {
+        id: category.id,
+        name: category.name,
+        sort_order: category.sort_order,
+        active: category.active
+      };
+      // Only include icon if provided; otherwise let DB default apply
+      if (category.icon) insertPayload.icon = category.icon;
+
       const { data, error: insertError } = await supabase
         .from('categories')
-        .insert({
-          id: category.id,
-          name: category.name,
-          icon: category.icon,
-          sort_order: category.sort_order,
-          active: category.active
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -64,14 +67,17 @@ export const useCategories = () => {
 
   const updateCategory = async (id: string, updates: Partial<Category>) => {
     try {
+      const updatePayload: any = {
+        name: updates.name,
+        sort_order: updates.sort_order,
+        active: updates.active
+      };
+      // Allow icon update only if explicitly provided
+      if (typeof updates.icon === 'string') updatePayload.icon = updates.icon;
+
       const { error: updateError } = await supabase
         .from('categories')
-        .update({
-          name: updates.name,
-          icon: updates.icon,
-          sort_order: updates.sort_order,
-          active: updates.active
-        })
+        .update(updatePayload)
         .eq('id', id);
 
       if (updateError) throw updateError;

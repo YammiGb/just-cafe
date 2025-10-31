@@ -10,23 +10,23 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick }) =>
   const { categories, loading } = useCategories();
 
   return (
-    <div className="sticky top-16 z-40 bg-white/90 backdrop-blur-md border-b border-ramen-sesame">
+    <div className="sticky top-16 z-40 bg-cafe-light/95 backdrop-blur-md border-b border-cafe-latte">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center space-x-4 overflow-x-auto py-3 scrollbar-hide">
+        <div className="flex items-center space-x-4 overflow-x-auto py-3 scrollbar-hide flex-nowrap">
           {loading ? (
-            <div className="flex space-x-4">
+            <div className="flex space-x-4 flex-nowrap">
               {[1,2,3,4,5].map(i => (
-                <div key={i} className="h-8 w-20 bg-gray-200 rounded animate-pulse" />
+                <div key={i} className="h-8 w-20 bg-gray-200 rounded animate-pulse flex-shrink-0" />
               ))}
             </div>
           ) : (
             <>
               <button
                 onClick={() => onCategoryClick('all')}
-                className={`px-3 py-1.5 rounded-full text-sm transition-colors duration-200 border ${
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors duration-200 border flex-shrink-0 whitespace-nowrap ${
                   selectedCategory === 'all'
-                    ? 'bg-ramen-red text-white border-ramen-red'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-ramen-red'
+                    ? 'bg-cafe-accent text-white border-cafe-accent'
+                    : 'bg-cafe-light text-gray-700 border-cafe-latte hover:border-cafe-accent hover:bg-cafe-beige'
                 }`}
               >
                 All
@@ -35,14 +35,13 @@ const SubNav: React.FC<SubNavProps> = ({ selectedCategory, onCategoryClick }) =>
                 <button
                   key={c.id}
                   onClick={() => onCategoryClick(c.id)}
-                  className={`px-3 py-1.5 rounded-full text-sm transition-colors duration-200 border flex items-center space-x-1 ${
+                  className={`px-3 py-1.5 rounded-full text-sm transition-colors duration-200 border flex-shrink-0 whitespace-nowrap ${
                     selectedCategory === c.id
-                      ? 'bg-ramen-red text-white border-ramen-red'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-ramen-red'
+                      ? 'bg-cafe-accent text-white border-cafe-accent'
+                      : 'bg-cafe-light text-gray-700 border-cafe-latte hover:border-cafe-accent hover:bg-cafe-beige'
                   }`}
                 >
-                  <span>{c.icon}</span>
-                  <span>{c.name}</span>
+                  {c.name}
                 </button>
               ))}
             </>

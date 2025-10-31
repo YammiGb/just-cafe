@@ -232,7 +232,7 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'ClickEats@Admin!2025') {
+    if (password === 'JustCafe@Admin!2025') {
       setIsAuthenticated(true);
       localStorage.setItem('beracah_admin_auth', 'true');
       setLoginError('');
@@ -934,7 +934,7 @@ const AdminDashboard: React.FC = () => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <Coffee className="h-8 w-8 text-black" />
-              <h1 className="text-2xl font-noto font-semibold text-black">ClickEats Admin</h1>
+              <h1 className="text-2xl font-noto font-semibold text-black">Just Cafè Admin</h1>
             </div>
             <div className="flex items-center space-x-4">
               <a
@@ -1055,7 +1055,6 @@ const AdminDashboard: React.FC = () => {
               {categoryCounts.map((category) => (
                 <div key={category.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <span className="text-lg">{category.icon}</span>
                     <span className="font-medium text-gray-900">{category.name}</span>
                   </div>
                   <span className="text-sm text-gray-500">{category.count} items</span>
