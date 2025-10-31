@@ -22,21 +22,34 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
   // Dine-in specific state
   const [partySize, setPartySize] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('gcash');
-  const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
 
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
 
+  // Build effective payment methods list including Cash (Onsite)
+  const cashMethod = {
+    id: 'cash',
+    name: 'Cash (Onsite)',
+    account_number: '',
+    account_name: '',
+    qr_code_url: '',
+    active: true,
+    sort_order: 999,
+    created_at: '',
+    updated_at: ''
+  } as any;
+  const effectivePaymentMethods = [...paymentMethods, cashMethod];
+
   // Set default payment method when payment methods are loaded
   React.useEffect(() => {
-    if (paymentMethods.length > 0 && !paymentMethod) {
-      setPaymentMethod(paymentMethods[0].id as PaymentMethod);
+    if (effectivePaymentMethods.length > 0 && !paymentMethod) {
+      setPaymentMethod((effectivePaymentMethods[0].id as PaymentMethod) || 'cash');
     }
-  }, [paymentMethods, paymentMethod]);
+  }, [effectivePaymentMethods, paymentMethod]);
 
-  const selectedPaymentMethod = paymentMethods.find(method => method.id === paymentMethod);
+  const selectedPaymentMethod = effectivePaymentMethods.find(method => method.id === paymentMethod);
 
   const handleProceedToPayment = () => {
     setStep('payment');
@@ -83,7 +96,7 @@ ${cartItems.map(item => {
 ${serviceType === 'delivery' ? `🛵 DELIVERY FEE:` : ''}
 
 💳 Payment: ${selectedPaymentMethod?.name || paymentMethod}
-📸 Payment Screenshot: Please attach your payment receipt screenshot
+${paymentMethod === 'cash' ? '' : '📸 Payment Screenshot: Please attach your payment receipt screenshot'}
 
 ${notes ? `📝 Notes: ${notes}` : ''}
 
@@ -350,7 +363,7 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
           <h2 className="text-2xl font-playfair font-medium text-cafe-dark mb-6">Choose Payment Method</h2>
           
           <div className="grid grid-cols-1 gap-4 mb-6">
-            {paymentMethods.map((method) => (
+            {effectivePaymentMethods.map((method) => (
               <button
                 key={method.id}
                 type="button"
@@ -361,14 +374,14 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
                     : 'border-cafe-latte bg-cafe-cream text-gray-700 hover:border-cafe-accent'
                 }`}
               >
-                <span className="text-2xl">💳</span>
+                <span className="text-2xl">{method.id === 'cash' ? '💵' : '💳'}</span>
                 <span className="font-medium">{method.name}</span>
               </button>
             ))}
           </div>
 
-          {/* Payment Details with QR Code */}
-          {selectedPaymentMethod && (
+          {/* Payment Details with QR Code (hide for cash) */}
+          {selectedPaymentMethod && paymentMethod !== 'cash' && (
             <div className="bg-cafe-beige rounded-lg p-6 mb-6 border border-cafe-latte">
               <h3 className="font-medium text-cafe-dark mb-4">Payment Details</h3>
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -393,13 +406,22 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
             </div>
           )}
 
-          {/* Reference Number */}
-          <div className="bg-cafe-cream border border-cafe-latte rounded-lg p-4">
-            <h4 className="font-medium text-cafe-dark mb-2">📸 Payment Proof Required</h4>
-            <p className="text-sm text-gray-700">
-              After making your payment, please take a screenshot of your payment receipt and attach it when you send your order via Messenger. This helps us verify and process your order quickly.
-            </p>
-          </div>
+          {/* Payment instructions: show proof section only for non-cash */}
+          {paymentMethod !== 'cash' ? (
+            <div className="bg-cafe-cream border border-cafe-latte rounded-lg p-4">
+              <h4 className="font-medium text-cafe-dark mb-2">📸 Payment Proof Required</h4>
+              <p className="text-sm text-gray-700">
+                After making your payment, please take a screenshot of your payment receipt and attach it when you send your order via Messenger. This helps us verify and process your order quickly.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-cafe-cream border border-cafe-latte rounded-lg p-4">
+              <h4 className="font-medium text-cafe-dark mb-2">💵 Pay with Cash Onsite</h4>
+              <p className="text-sm text-gray-700">
+                Please proceed to the counter and pay in cash when you arrive. No payment screenshot needed.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Order Summary */}
