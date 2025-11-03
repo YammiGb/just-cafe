@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Clock } from 'lucide-react';
+import { ArrowLeft, Clock, AlertCircle } from 'lucide-react';
 import { CartItem, PaymentMethod, ServiceType } from '../types';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
 
@@ -8,6 +8,8 @@ interface CheckoutProps {
   totalPrice: number;
   onBack: () => void;
 }
+
+const MINIMUM_DELIVERY_AMOUNT = 150;
 
 const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) => {
   const { paymentMethods } = usePaymentMethods();
@@ -110,10 +112,13 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
     
   };
 
+  const isDeliveryMinimumMet = serviceType !== 'delivery' || totalPrice >= MINIMUM_DELIVERY_AMOUNT;
+  
   const isDetailsValid = customerName && contactNumber && 
     (serviceType !== 'delivery' || address) && 
     (serviceType !== 'pickup' || (pickupTime !== 'custom' || customTime)) &&
-    (serviceType !== 'dine-in' || (partySize > 0));
+    (serviceType !== 'dine-in' || (partySize > 0)) &&
+    isDeliveryMinimumMet;
 
   if (step === 'details') {
     return (
@@ -160,6 +165,22 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
                 <span className="text-cafe-accent">₱{totalPrice}</span>
               </div>
             </div>
+            
+            {/* Delivery Minimum Order Warning */}
+            {serviceType === 'delivery' && totalPrice < MINIMUM_DELIVERY_AMOUNT && (
+              <div className="mt-4 bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                <div className="flex items-start space-x-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-red-800 mb-1">Minimum Order Not Met</h4>
+                    <p className="text-sm text-red-700">
+                      Delivery orders require a minimum of <span className="font-bold">₱{MINIMUM_DELIVERY_AMOUNT}</span>. 
+                      Please add <span className="font-bold">₱{MINIMUM_DELIVERY_AMOUNT - totalPrice}</span> more to proceed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Customer Details Form */}
@@ -215,6 +236,13 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
                       <div className="text-sm font-medium">{option.label}</div>
                     </button>
                   ))}
+                </div>
+                
+                {/* Delivery minimum order info */}
+                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-xs text-blue-800">
+                    <span className="font-medium">📍 Note:</span> Delivery orders require a minimum purchase of ₱{MINIMUM_DELIVERY_AMOUNT}
+                  </p>
                 </div>
               </div>
 
