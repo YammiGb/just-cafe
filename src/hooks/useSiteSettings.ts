@@ -25,7 +25,8 @@ export const useSiteSettings = () => {
         site_logo: data.find(s => s.id === 'site_logo')?.value || '/logo.jpg',
         site_description: data.find(s => s.id === 'site_description')?.value || 'Welcome to Just Cafè — Your perfect coffee destination',
         currency: data.find(s => s.id === 'currency')?.value || '₱',
-        currency_code: data.find(s => s.id === 'currency_code')?.value || 'PHP'
+        currency_code: data.find(s => s.id === 'currency_code')?.value || 'PHP',
+        delivery_enabled: data.find(s => s.id === 'delivery_enabled')?.value || 'true'
       };
 
       setSiteSettings(settings);

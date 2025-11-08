@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Clock, AlertCircle } from 'lucide-react';
 import { CartItem, PaymentMethod, ServiceType } from '../types';
 import { usePaymentMethods } from '../hooks/usePaymentMethods';
+import { useSiteSettings } from '../hooks/useSiteSettings';
 
 interface CheckoutProps {
   cartItems: CartItem[];
@@ -13,6 +14,7 @@ const MINIMUM_DELIVERY_AMOUNT = 150;
 
 const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) => {
   const { paymentMethods } = usePaymentMethods();
+  const { siteSettings } = useSiteSettings();
   const [step, setStep] = useState<'details' | 'payment'>('details');
   const [customerName, setCustomerName] = useState('');
   const [contactNumber, setContactNumber] = useState('');
@@ -52,6 +54,9 @@ const Checkout: React.FC<CheckoutProps> = ({ cartItems, totalPrice, onBack }) =>
   }, [effectivePaymentMethods, paymentMethod]);
 
   const selectedPaymentMethod = effectivePaymentMethods.find(method => method.id === paymentMethod);
+  
+  // Check if delivery is enabled
+  const isDeliveryEnabled = siteSettings?.delivery_enabled === 'true';
 
   const handleProceedToPayment = () => {
     setStep('payment');
@@ -216,12 +221,12 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
               {/* Service Type */}
               <div>
                 <label className="block text-sm font-medium text-cafe-dark mb-3">Service Type *</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className={`grid gap-3 ${isDeliveryEnabled ? 'grid-cols-3' : 'grid-cols-2'}`}>
                   {[
-                    { value: 'dine-in', label: 'Dine In', icon: '🪑' },
-                    { value: 'pickup', label: 'Pickup', icon: '🚶' },
-                    { value: 'delivery', label: 'Delivery', icon: '🛵' }
-                  ].map((option) => (
+                    { value: 'dine-in', label: 'Dine In', icon: '🪑', enabled: true },
+                    { value: 'pickup', label: 'Pickup', icon: '🚶', enabled: true },
+                    { value: 'delivery', label: 'Delivery', icon: '🛵', enabled: isDeliveryEnabled }
+                  ].filter(option => option.enabled).map((option) => (
                     <button
                       key={option.value}
                       type="button"
@@ -238,12 +243,23 @@ Please confirm this order to proceed. Thank you for choosing Just Cafè! ☕
                   ))}
                 </div>
                 
-                {/* Delivery minimum order info */}
-                <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
-                  <p className="text-xs text-blue-800">
-                    <span className="font-medium">📍 Note:</span> Delivery orders require a minimum purchase of ₱{MINIMUM_DELIVERY_AMOUNT}
-                  </p>
-                </div>
+                {/* Delivery minimum order info - only show if delivery is enabled */}
+                {isDeliveryEnabled && (
+                  <div className="mt-3 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-800">
+                      <span className="font-medium">📍 Note:</span> Delivery orders require a minimum purchase of ₱{MINIMUM_DELIVERY_AMOUNT}
+                    </p>
+                  </div>
+                )}
+                
+                {/* Delivery disabled message */}
+                {!isDeliveryEnabled && (
+                  <div className="mt-3 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                    <p className="text-xs text-gray-600">
+                      <span className="font-medium">ℹ️ Note:</span> Delivery service is currently unavailable
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Dine-in Details */}
